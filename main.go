@@ -158,7 +158,7 @@ func main() {
 	// Download mp3
 	youtubeURL := fmt.Sprintf("https://www.youtube.com/watch?v=%s", youtubeID)
 	mp3file := spotifyID + ".mp3"
-	tmpFile := fmt.Sprintf("%s/%s", os.TempDir(), mp3file)
+	tmpFile := os.TempDir() + mp3file
 	cmd := exec.Command("yt-dlp",
 		"-o", tmpFile,
 		"-f", "bestaudio",
