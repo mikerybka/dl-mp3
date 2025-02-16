@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -84,12 +85,45 @@ func searchYouTube(query, apiKey string) (*YouTubeSearchResponse, error) {
 	return &result, nil
 }
 
+type GetSpotifyTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int    `json:"expires_in"`
+}
+
+func getSpotifyToken(id, secret string) (string, error) {
+	body := bytes.NewReader([]byte("grant_type=client_credentials"))
+	req, err := http.NewRequest("POST", "https://accounts.spotify.com/api/token", body)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth(id, secret)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	res := GetSpotifyTokenResponse{}
+	err = json.NewDecoder(resp.Body).Decode(&res)
+	if err != nil {
+		panic(err)
+	}
+
+	return res.AccessToken, nil
+}
+
 func main() {
-	spotifyToken := os.Getenv("SPOTIFY_API_TOKEN")
+	spotifyClientID := os.Getenv("SPOTIFY_CLIENT_ID")
+	spotifyClientSecret := os.Getenv("SPOTIFY_CLIENT_SECRET")
+	spotifyToken, err := getSpotifyToken(spotifyClientID, spotifyClientSecret)
+	if err != nil {
+		log.Fatal(err)
+	}
 	youtubeAPIKey := os.Getenv("YOUTUBE_API_KEY")
 
 	if len(os.Args) < 2 {
-		log.Fatal("Usage: %s <spotify_url>", os.Args[0])
+		log.Fatalf("Usage: %s <spotify_url>\n", os.Args[0])
 	}
 
 	// Parse spotify URL
